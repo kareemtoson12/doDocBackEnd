@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // Health check endpoint
-app.get('/api/v1/health', (req: Request, res: Response) => {
+app.get(['/health', '/api/v1/health'], (req: Request, res: Response) => {
   res.json({ status: 'success', message: 'Docdoc API is running' });
 });
 
