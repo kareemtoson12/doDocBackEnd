@@ -1,0 +1,71 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String          @id @default(uuid()) @db.Uuid
+  fullName       String          @map("full_name") @db.VarChar(150)
+  email          String          @unique @db.VarChar(255)
+  phoneNumber    String          @unique @map("phone_number") @db.VarChar(25)
+  passwordHash   String          @map("password_hash") @db.VarChar(255)
+  avatarUrl      String?         @map("avatar_url") @db.VarChar(500)
+  isActive       Boolean         @default(true) @map("is_active")
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+  passwordResets PasswordReset[]
+
+  @@map("users")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz()
+  isUsed    Boolean  @default(false) @map("is_used")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@map("password_resets")
+}
+
+model Specialization {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique @db.VarChar(100)
+  slug         String   @unique @db.VarChar(100)
+  iconUrl      String   @map("icon_url") @db.VarChar(500)
+  description  String?  @db.Text
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  doctors      Doctor[]
+
+  @@map("specializations")
+}
+
+model Doctor {
+  id               String         @id @default(uuid()) @db.Uuid
+  specializationId String         @map("specialization_id") @db.Uuid
+  name             String         @db.VarChar(150)
+  hospitalName     String         @map("hospital_name") @db.VarChar(200)
+  rating           Decimal        @default(0.0) @db.Decimal(2, 1)
+  reviewCount      Int            @default(0) @map("review_count")
+  profileImageUrl  String         @map("profile_image_url") @db.VarChar(500)
+  bio              String?        @db.Text
+  consultationFee  Decimal?       @default(0.00) @map("consultation_fee") @db.Decimal(10, 2)
+  isRecommended    Boolean        @default(false) @map("is_recommended")
+  isAvailable      Boolean        @default(true) @map("is_available")
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+  specialization   Specialization @relation(fields: [specializationId], references: [id])
+
+  @@index([specializationId])
+  @@index([rating, reviewCount])
+  @@map("doctors")
+}
